@@ -383,11 +383,13 @@ const RUNTIME_HOST = window.location.hostname || '';
 const IS_LOCAL_RUNTIME = ['', 'localhost', '127.0.0.1'].includes(RUNTIME_HOST);
 const HIMATER_API_BASE =
   window.HIMATER_API_BASE ||
-  (IS_LOCAL_RUNTIME ? 'http://localhost:8787' : 'https://api.himater.com.br');
+  (IS_LOCAL_RUNTIME ? 'http://localhost:8787' : 'https://api-himater-kommo-production.up.railway.app');
 const ALFRA_OS_API_BASE =
   window.ALFRA_OS_API_BASE ||
   (IS_LOCAL_RUNTIME ? 'http://localhost:3000' : '');
 const KOMMO_METRICS_URL = `${HIMATER_API_BASE}/kommo/metrics/weekly`;
+const HIMATER_SUPA_URL = 'https://gyfvbiletawyqsehhcwa.supabase.co';
+const HIMATER_SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5ZnZiaWxldGF3eXFzZWhoY3dhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzM5NzQ5OCwiZXhwIjoyMDc4OTczNDk4fQ.5aay_wbezUiJfXablurVnfMQcjc0GTGeyH8JEgIa3tc';
 const META_SYNC_MISSING_ENDPOINT = ALFRA_OS_API_BASE
   ? `${ALFRA_OS_API_BASE}/api/ads-account/sync-missing-days`
   : '';
@@ -1074,6 +1076,49 @@ function reconstruirSemanas() {
   });
 }
 
+async function himaterSupaGet(cacheKey) {
+  try {
+    const r = await fetch(
+      `${HIMATER_SUPA_URL}/rest/v1/kommo_cache?cache_key=eq.${encodeURIComponent(cacheKey)}&select=payload`,
+      { headers: { apikey: HIMATER_SUPA_KEY, Authorization: `Bearer ${HIMATER_SUPA_KEY}` } }
+    );
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d?.[0]?.payload ?? null;
+  } catch { return null; }
+}
+
+async function himaterSupaUpsert(cacheKey, payload) {
+  try {
+    await fetch(`${HIMATER_SUPA_URL}/rest/v1/kommo_cache`, {
+      method: 'POST',
+      headers: {
+        apikey: HIMATER_SUPA_KEY,
+        Authorization: `Bearer ${HIMATER_SUPA_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ cache_key: cacheKey, payload, synced_at: new Date().toISOString() }),
+    });
+  } catch(e) { console.warn('Supabase upsert falhou', e); }
+}
+
+async function carregarEstadoRemoto() {
+  try {
+    const userData = await himaterSupaGet('user_data');
+    if (userData) {
+      if (Array.isArray(userData.semanasCustom) && userData.semanasCustom.length) {
+        semanasCustom = userData.semanasCustom;
+      }
+      if (userData.edits && typeof userData.edits === 'object') {
+        edits = { ...edits, ...userData.edits };
+      }
+      reconstruirSemanas();
+      render();
+    }
+  } catch(e) { console.warn('Erro ao carregar estado remoto', e); }
+}
+
 function salvarStorage() {
   try {
     localStorage.setItem(LS_VENDAS,   JSON.stringify(userVendas));
@@ -1081,6 +1126,7 @@ function salvarStorage() {
     localStorage.removeItem(LS_APAGADAS);
     localStorage.setItem(LS_EDITS,    JSON.stringify(edits));
   } catch(e) { console.warn('localStorage indisponível', e); }
+  himaterSupaUpsert('user_data', { semanasCustom, edits });
 }
 
 function carregarStorage() {
@@ -1735,6 +1781,7 @@ carregarStorage();
 criarSemanasFechadasAutomaticamente();
 buildNav();
 render();
+carregarEstadoRemoto();
 
 async function sincronizarManual() {
   const btn = document.getElementById('btn-sync');
