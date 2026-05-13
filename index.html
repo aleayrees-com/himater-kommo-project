@@ -374,10 +374,11 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   Relatório gerado pela <strong>Himater</strong> &mdash; Atualizado semanalmente &mdash; <span id="footer-date"></span>
 </footer>
 
+<script src="config.js"></script>
 <script>
 // ── CONFIG SUPABASE (proxy — chave mascarada no backend) ──────────────────
 const SUPA_URL = 'https://nxtctrtxjypxvneiissj.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dGN0cnR4anlweHZuZWlpc3NqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjI1MTk0NywiZXhwIjoyMDc3ODI3OTQ3fQ._p99lJqsUlx1jYt1Th60Nf40TRufVXwhPUBWylYb2C0';
+const SUPA_KEY = window.HIMATER_CONFIG?.SUPA_KEY || '';
 const META_ACCOUNT   = 'act_581072857607084'; // Himater Meta
 const RUNTIME_HOST = window.location.hostname || '';
 const IS_LOCAL_RUNTIME = ['', 'localhost', '127.0.0.1'].includes(RUNTIME_HOST);
@@ -389,7 +390,7 @@ const ALFRA_OS_API_BASE =
   (IS_LOCAL_RUNTIME ? 'http://localhost:3000' : '');
 const KOMMO_METRICS_URL = `${HIMATER_API_BASE}/kommo/metrics/weekly`;
 const HIMATER_SUPA_URL = 'https://gyfvbiletawyqsehhcwa.supabase.co';
-const HIMATER_SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5ZnZiaWxldGF3eXFzZWhoY3dhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzM5NzQ5OCwiZXhwIjoyMDc4OTczNDk4fQ.5aay_wbezUiJfXablurVnfMQcjc0GTGeyH8JEgIa3tc';
+const HIMATER_SUPA_KEY = window.HIMATER_CONFIG?.HIMATER_SUPA_KEY || '';
 const META_SYNC_MISSING_ENDPOINT = ALFRA_OS_API_BASE
   ? `${ALFRA_OS_API_BASE}/api/ads-account/sync-missing-days`
   : '';
@@ -467,7 +468,7 @@ async function carregarPlanilhaGoogle() {
   };
 
   const fromSheetsApi = async () => {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${GSHEETS_ID}/values/${encodeURIComponent(GSHEETS_RANGE)}?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${GSHEETS_ID}/values/${encodeURIComponent(GSHEETS_RANGE)}?key=${window.HIMATER_CONFIG?.GSHEETS_API_KEY || ''}`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
