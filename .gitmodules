@@ -1,0 +1,3 @@
+[submodule "api-himater-kommo"]
+	path = api-himater-kommo
+	url = https://github.com/aleayrees-com/api-himater-kommo
