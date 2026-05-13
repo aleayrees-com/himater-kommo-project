@@ -383,7 +383,7 @@ const RUNTIME_HOST = window.location.hostname || '';
 const IS_LOCAL_RUNTIME = ['', 'localhost', '127.0.0.1'].includes(RUNTIME_HOST);
 const HIMATER_API_BASE =
   window.HIMATER_API_BASE ||
-  (IS_LOCAL_RUNTIME ? 'http://localhost:8787' : 'https://api-himater-kommo-production.up.railway.app');
+  (IS_LOCAL_RUNTIME ? 'http://localhost:8787' : 'https://api-himater-kommo.onrender.com');
 const ALFRA_OS_API_BASE =
   window.ALFRA_OS_API_BASE ||
   (IS_LOCAL_RUNTIME ? 'http://localhost:3000' : '');
