@@ -1813,6 +1813,7 @@ async function sincronizarManual() {
         toast.innerHTML = '<span style="color:var(--accent);font-size:16px;">✓</span> Dados sincronizados!';
       }, 3500);
     }
+    himaterSupaUpsert('last_sync', { syncedAt: new Date().toISOString() });
   } catch(e) {
     const toast = document.getElementById('sync-toast');
     if (toast) {
@@ -1829,14 +1830,25 @@ async function sincronizarManual() {
   }
 }
 
-// Sincroniza Meta + Google automaticamente ao abrir
+async function deveAutoSincronizar() {
+  try {
+    const data = await himaterSupaGet('last_sync');
+    if (!data?.syncedAt) return true;
+    const diffDays = (Date.now() - new Date(data.syncedAt).getTime()) / (1000 * 60 * 60 * 24);
+    return diffDays >= 7;
+  } catch { return false; }
+}
+
 (async () => {
   criarSemanasFechadasAutomaticamente();
   await garantirSemanasDaPlanilha();
-  await Promise.all([sincronizarTodasMeta(), sincronizarTodasGoogle(), sincronizarKommoSemanal()]);
-  reconstruirSemanas();
-  buildNav();
-  render();
+  if (await deveAutoSincronizar()) {
+    await Promise.all([sincronizarTodasMeta(), sincronizarTodasGoogle(), sincronizarKommoSemanal()]);
+    himaterSupaUpsert('last_sync', { syncedAt: new Date().toISOString() });
+    reconstruirSemanas();
+    buildNav();
+    render();
+  }
 })();
 </script>
 </body>
